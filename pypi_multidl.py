@@ -53,7 +53,7 @@ def parse_args():
                         "Defaults \"pip config get global.index-url\" if set, "
                         "or PyPI otherwise.")
     parser.add_argument("-n", "--dry-run", action="store_true",
-                        help="Down download files, just list them.")
+                        help="Don't download files, just list them.")
     args = parser.parse_args()
     if args.version:
         print(f"pypi-multidl {__version__}")
