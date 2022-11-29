@@ -3,6 +3,7 @@
 from argparse import ArgumentParser
 from collections import namedtuple
 import hashlib
+import json
 from pathlib import Path
 import subprocess
 import sys
@@ -18,7 +19,14 @@ __version__ = "1.0.0"
 DEFAULT_INDEX_URL = "https://pypi.org/simple/"
 
 
-Download = namedtuple("Download", "filename, url, hash_algo, hash_digest")
+Download = namedtuple("Download", [
+    "project_name",
+    "version",
+    "filename",
+    "url",
+    "hash_algo",
+    "hash_digest",
+])
 
 
 def main():
@@ -28,12 +36,23 @@ def main():
     dest_dir = Path(args.dest_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)
     downloads = find_downloads(requirements, index_url, dest_dir)
+    download_list = []
     if args.dry_run:
-        for download in downloads:
-            print(download.filename)
+        for dl in downloads:
+            print(dl.filename)
     else:
-        for download in downloads:
-            download_file(download, dest_dir)
+        for dl in downloads:
+            print(dl.filename)
+            download_file(dl, dest_dir)
+            list_entry = {
+                "name": u.canonicalize_name(dl.project_name),
+                "version": u.canonicalize_version(dl.version),
+                "filename": dl.filename,
+            }
+            download_list.append(list_entry)
+        if args.list_file:
+            with open(args.list_file, "w", encoding="utf-8") as f:
+                json.dump(download_list, f, sort_keys=True, indent=4)
 
 
 def parse_args():
@@ -48,6 +67,11 @@ def parse_args():
     parser.add_argument("-d", "--dest-dir", default=".",
                         help="Which directory to download files to "
                         "(default: current directory)")
+    parser.add_argument("-l", "--list-file",
+                        help="Path to an output JSON file listing all "
+                        "downloaded files. The file is an array of objects, "
+                        "where each object has a name, version, and filename "
+                        "attribute.")
     parser.add_argument("-i", "--index-url",
                         help="Which package index to use. "
                         "Defaults \"pip config get global.index-url\" if set, "
@@ -125,7 +149,7 @@ def find_project_downloads(project_name, specifier_set, index_url, dest_dir):
         else:
             hash_algo = None
             hash_digest = None
-        yield Download(filename, url, hash_algo, hash_digest)
+        yield Download(project_name, version, filename, url, hash_algo, hash_digest)
 
 
 def version_from_filename(filename):
@@ -150,18 +174,18 @@ def version_from_filename(filename):
     return None
 
 
-def download_file(download, dest_dir):
-    filename, url, hash_algo, hash_digest = download
-    with (dest_dir / filename).open("wb") as f:
-        print(filename)
-        if hash_algo:
-            h = hashlib.new(hash_algo)
-        r = requests.get(url, stream=True)
+def download_file(dl, dest_dir):
+    path = dest_dir / dl.filename
+    with path.open("wb") as f:
+        if dl.hash_algo:
+            h = hashlib.new(dl.hash_algo)
+        r = requests.get(dl.url, stream=True)
         for chunk in r.iter_content(chunk_size=4096):
             f.write(chunk)
-            if hash_algo:
+            if dl.hash_algo:
                 h.update(chunk)
-        if hash_algo:
-            if h.hexdigest() != hash_digest:
+        if dl.hash_algo:
+            if h.hexdigest() != dl.hash_digest:
+                path.unlink()
                 msg = f"{hash_algo} hash for {filename} did not match!"
                 raise Exception(msg)
