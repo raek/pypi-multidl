@@ -14,7 +14,7 @@ import packaging.utils as u
 import requests
 
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 DEFAULT_INDEX_URL = "https://pypi.org/simple/"
 

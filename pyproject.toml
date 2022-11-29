@@ -3,7 +3,7 @@ requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "pypi_multidl"
+name = "pypi-multidl"
 authors = [{name = "Rasmus Bondesson", email = "raek@raek.se"}]
 readme = "README.md"
 license = {file = "LICENSE"}
