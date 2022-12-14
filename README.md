@@ -24,7 +24,7 @@ that its dependencies aren't pinned to specific version. Then begin by compiling
 the list of transitive pinned dependencies:
 
     cd some-project
-	pip-compile setup.py # ...or setup.cf, or pyproject.toml
+	pip-compile setup.py # ...or setup.cfg, or pyproject.toml
 
 Now you have a `requriements.txt` file. Continue to download all the
 dependencies to the `deps/` directory:
@@ -35,7 +35,7 @@ The project can then be installed offline like this:
 
     pip install --no-index --find-links deps/ .
 
-## Example Usage: List all Distribution Packages Avaiable for a Project
+## Example Usage: List all Distribution Packages Available for a Project
 
 The `pypi-multidl` tool can also be given dependency specifications directly on
 the command line:
